@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# function which uses to echo and run command in the console
+exe() { echo "\$ $@" ; "$@"; }
+
+# define a public folder for deploying
+# usually it is 'web', 'www' or 'public' folder
+publicFolder='web'
+
+# local configuration
+localPath="$(pwd)/${publicFolder}"
+
+# project configuration
+projectName='The Project'
+
+# target configuration
+# this variables will use for following command:
+#   ssh ${targetUser}@${targetHost}:${targetPath}
+targetUser='serverUserName'
+targetHost='server.ip.or.domain'
+targetPath="/path/to/project/on/the/server/${publicFolder}"
+
+
+# process deploy
+echo "Deploying project ${projectName} to the ${targetHost} with user ${targetUser}."
+
+echo "Step into root folder"
+exe cd ${localPath}
+
+echo "Clean local assets..."
+exe rm -rf web/assets/*
+
+echo "Build local assets..."
+exe npm run build
+
+echo "Clean remote public folder..."
+exe ssh ${targetUser}@${targetHost} rm -rf ${targetPath}/*
+
+echo "Syncing public folder..."
+exe rsync -a ${localPath}/ ${targetUser}@${targetHost}:${targetPath}
+
+echo "Complete!"
+

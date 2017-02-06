@@ -1,0 +1,35 @@
+.beat
+  display inline-block
+  margin 0 25px
+  &__audio
+    display none
+  &__equalizer
+    width 100%
+    position absolute
+    left 0
+    bottom 30px
+    text-align center
+    margin-left -1px
+    &-value
+      display inline-block
+      margin-left 1px
+      width 8px
+      height 0
+      background #FF9900
+      vertical-align bottom
+      transition height 0.2s ease
+  &__play
+    display inline-block
+    position relative
+    vertical-align middle
+    opacity 0
+    border-style solid
+    border-width 9px 0 9px 17px
+    border-color transparent transparent transparent #FF9900
+    transition opacity 0.3s ease
+    box-shadow inset -2px -2px 13px -2px rgba(0,0,0,0.41)
+  &:hover &__play
+  &.button_guide &__play
+    opacity 1
+  &_playing &__play
+    opacity 0 !important

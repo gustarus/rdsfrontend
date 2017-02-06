@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{%=o.htmlWebpackPlugin.options.title%}</title>
+    <meta content="{%=o.htmlWebpackPlugin.options.title%}" name="title">
+    <meta content="{%=o.htmlWebpackPlugin.options.title%}" name="application-name">
+    <meta content="{%=o.htmlWebpackPlugin.options.description%}" name="description">
+    <link rel="stylesheet" type="text/css" href="">
+    {% for (var css in o.htmlWebpackPlugin.files.css) { %}
+        <link href="{%=o.htmlWebpackPlugin.files.css[css] %}" rel="stylesheet">
+    {% } %}
+
+    <!-- youtube api scripts -->
+    <script type="text/javascript" src="https://www.youtube.com/iframe_api"></script>
+</head>
+
+<body>
+
+<div id="root"></div>
+
+{% for (var chunk in o.htmlWebpackPlugin.files.chunks) { %}
+    <script src="{%=o.htmlWebpackPlugin.files.chunks[chunk].entry %}"></script>
+{% } %}
+
+</body>
+</html>

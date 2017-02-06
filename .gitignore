@@ -1,0 +1,8 @@
+/deploy.sh
+/.idea
+/web/assets/*
+/node_modules
+/config/*.local.js
+/web/index.html
+/vendor
+npm-debug.log
