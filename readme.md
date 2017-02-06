@@ -5,7 +5,7 @@ An example of usage following technologies:
 * [webpack](https://webpack.github.io/) - for assets compilation;
 * [babel](https://babeljs.io/) - js compiler;
 * [stylus](http://stylus-lang.com/) - for css styles;
-* [css modules](https://github.com/css-modules/css-modules) - for css styles;
+* [css modules](https://github.com/css-modules/css-modules) - for stylus modules;
 * [yarn](https://yarnpkg.com/) - packages manager;
 * [nvm](https://github.com/creationix/nvm) - node version manger;
 
