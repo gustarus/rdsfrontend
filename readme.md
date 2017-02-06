@@ -1,3 +1,5 @@
+## <img src="http://webulla.ru/static/logo-60x60.png" width="22px" height="22px" style="vertical-align: middle;" /> RDSFront&Home - a landing page for rds frontend team
+
 An example of usage following technologies:
 * [react.js](https://facebook.github.io/react/) - as main technology;
 * [webpack](https://webpack.github.io/) - for assets compilation;
