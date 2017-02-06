@@ -7,10 +7,12 @@ An example of usage following technologies:
 * [yarn](https://yarnpkg.com/) - packages manager;
 * [nvm](https://github.com/creationix/nvm) - node version manger;
 
-Also you can find interested next technics for youtube videos:
+Also you can find interested next technics for **youtube videos**:
 * video as background;
 * repeating video;
 * programmatically video trimming.
+
+And look at **deploy.sh** script if you want to understand how to deploy static files of your project to the remote server.
 
 
 ### Launch the application locally
