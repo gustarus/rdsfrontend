@@ -1,0 +1,1293 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>rds-front.html</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+    <style type="text/css">
+      b {
+        color: #a3ff00;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section class="present" data-background-image='static/cook-van.jpg'>
+          <section xdata-background-color='#315efb' data-background-color='rgba(0,0,0,.3)'>
+            <img data-src="static/react-logo-white.svg" style="box-shadow: none; border: none; background: none; width: 150px;">
+            <h2 style="white-space: nowrap;">React.js / Готовим data-flow</h2>
+          </section>
+        </section>
+        <section xdata-background-color='black'>
+          <h2>О чем пойдет речь?</h2>
+          <ol>
+            <li>Примитивная передача данных через <b>props</b></li>
+            <li>Что такое <b>context</b> и как его использовать?</li>
+            <li>Higher Order Components</li>
+            <li>Концепция <b>Flux</b></li>
+            <li><b>Redux</b> и опыт работы с ним</li>
+            <li>Альтернативный подход - <b>MobX</b></li>
+          </ol>
+        </section>
+        <section data-background-image='static/road.jpg'>
+          <section data-background-color='rgba(0,0,0,.4)'>
+            <h2>props</h2>
+            <p class="fragment">Передача данных между компонентами строго по иерархии <b>Parent/Child</b></p>
+          </section>
+        </section>
+        <section data-background-color="white">
+          <img data-src="static/react-props.svg" style="box-shadow: none; border: none; background: none; width: 100%;">
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+              class Main extends React.Component {
+                state = { posts: [], users: [] }
+                fetchPosts(params) {
+                  api.fetchPosts(params).then((posts) => {
+                    this.setState({posts})
+                  })
+                }
+                fetchUsers(params) {
+                  api.fetchPosts(params).then((users) => {
+                    this.setState({users})
+                  })
+                }
+                render() {
+                  return &lt;div>
+                    &lt;Users
+                      users={this.state.users}
+                      fetchUsers={this.fetchUsers.bind(this)} />
+                    &lt;Posts
+                      users={this.state.posts}
+                      fetchPosts={this.fetchPosts.bind(this)} />
+                  &lt;/div>
+                }
+              }
+            </code>
+          </pre>
+        </section>
+        <section >
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+              class Users extends React.Component {
+                static propTypes = {
+                  users: React.PropTypes.array.isRequired,
+                  fetchUsers: React.PropTypes.func
+                }
+                componentWillMount() {
+                  this.props.fetchUsers()
+                }
+                render() {
+                  return &lt;ul>
+                    {
+                      this.props.users.map((user) => (
+                        &lt;li key={user.id}>
+                          {user.name}
+                        &lt;/li>
+                      ))
+                    }
+                  &lt;/ul>
+                }
+              }
+            </code>
+          </pre>
+        </section>
+        <section data-background-color='#27ae60'>
+          <h2>Плюсы</h2>
+          <ul>
+            <li class="fragment">Очень простая концепция</li>
+            <li class="fragment">Четкая иерархия взаимодействия</li>
+            <li class="fragment">Бизнес-логика внутри компонента</li>
+            <li class="fragment">Каждый компонент как отдельный модуль (Code Reuse)</li>
+          </ul>
+        </section>
+        <section data-background-color='#c0392b'>
+          <h2>Минусы</h2>
+          <ul>
+            <li class="fragment">Сложно масштабировать бизнес-логику</li>
+            <li class="fragment">Data-flow сильно связан с иерархией компонентов</li>
+            <li class="fragment">В большой системе компоненты-посредники становятся избыточными</li>
+          </ul>
+        </section>
+        <section data-background-image='static/ocean.jpg'>
+          <section data-background-color='rgba(0,0,0,.4)'>
+            <h2>context</h2>
+            <p class="fragment">Общие данные доступные всем потомкам компонента</p>
+          </section>
+        </section>
+        <section data-background-color="white">
+          <img class="stretch" data-src="static/context2.svg" style="box-shadow: none; border: none; background: none;">
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" >
+            <code class="hljs js" data-trim>
+              class Main extends React.Component {
+                static childContextTypes = {
+                  emitter: React.PropTypes.instanceOf(EventEmitter)
+                }
+
+                constructor(props) {
+                  super(props)
+                  this.emitter = new EventEmitter
+                }
+
+                getChildContext() {
+                  return {
+                    emitter: this.emitter
+                  }
+                }
+
+                render() {
+                  ...
+                }
+              }
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+            class User extends React.Component {
+              static contextTypes = {
+                emitter: React.PropTypes.instanceOf(EventEmitter),
+              }
+
+              onButtonClick() {
+                this.context.emitter.emit('clickOnUser', {
+                  userId: this.props.id
+                })
+              }
+
+              render() {
+                ...
+              }
+            }
+            </code>
+          </pre>
+        </section>
+        <section data-background-color='#27ae60'>
+          <h2>Как можно использовать</h2>
+          <ul>
+            <li class="fragment">Шина для передачи событий</li>
+            <li class="fragment">Передача сторов (не данных)</li>
+            <li class="fragment">Темы для компонентов</li>
+          </ul>
+        </section>
+        <section data-background-color='#c0392b'>
+          <h2>Будьте осторожны</h2>
+          <ul>
+            <li class="fragment">Нельзя явно менять context</li>
+            <li class="fragment">Избегайте передачи данных через context</li>
+            <li class="fragment">Это Experimental API (из доки фейсбука)</li>
+          </ul>
+        </section>
+        <section data-background-image='static/mountain.jpg'>
+          <section data-background-color='rgba(0,0,0,.4)'>
+            <h2>higher order component (HOC)</h2>
+            <p class="fragment">
+              Это функция, которая принимает на вход компонент и возвращает новый компонент.
+            </p>
+          </section>
+        </section>
+        <section data-background-image='static/mountain.jpg'>
+          <section data-background-color='rgba(0,0,0,.4)'>
+            <p>
+              HOC добавляет новое поведение в компонент обычно через <b>render()</b> или реже через классическое <b>наследование</b>.
+            </p>
+          </section>
+        </section>
+        <section style="padding: 0;">
+          <p>Пишем в лог каждый вызов <b>render</b></p>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+            function logger(OriginalComponent) {
+              class ResultComponent extends OriginalComponent {
+                render() {
+                  console.log('call render')
+                  return super.render()
+                }
+              }
+              return ResultComponent
+            }
+
+            class MyComponent extends React.Component {
+              ...
+            }
+
+            MyComponentWithLog = logger(MyComponent)
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <p>PureComponent (чистый компонент) - пытается перерендерить себя только при изменении <b>props</b></p>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+            function makePure(OriginalComponent) {
+              class ResultComponent extends React.Component {
+                shouldComponentUpdate(nextProps) {
+                  return !shallowEqual(nextProps, this.props)
+                }
+                render() {
+                  return &lt;OriginalComponent {...this.props} />
+                }
+              }
+              return ResultComponent
+            }
+
+            class OriginalComponent extends React.Component {
+              ...
+            }
+
+            PureOriginalComponent = makePure(OriginalComponent)
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+            function withEmitter(OriginalComponent) {
+              class ResultComponent extends React.Component {
+                static contextTypes = {
+                  emitter: React.PropTypes.instanceOf(EventEmitter).isRequired,
+                }
+                render() {
+                  return &lt;OriginalComponent
+                    {...this.props}
+                    emitter={this.context.emitter}/>
+                }
+              }
+              return ResultComponent
+            }
+
+            class OriginalComponent extends React.Component {
+
+              onButtonClick() {
+                this.props.emitter.emit('helloFromComponent')
+              }
+
+              render() {...}
+            }
+
+            OriginalWithEmitter = withEmitter(OriginalComponent)
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+              withEmitter(makePure(OriginalComponent))
+
+              ...
+
+              @connect()
+              @withEmitter
+              @withI18n
+              @withTooltip
+              @makePure
+              export default class OriginalComponent {
+
+                onClick() {
+                  this.props.showTooltip('On Button Click')
+                  this.props.emitter.emit('buttonClick')
+                }
+
+                render() {
+                  return &lt;div>{this.props.i18n.translate('hello')}&lt;/div>
+                }
+
+                ...
+              }
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <h2>recompose</h2>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+              import {withProps} from 'recompose'
+
+              const makeFriend = withProps((props) => ({
+                user: props.user + ', hello friend!'
+              }))
+
+              class User extends React.Component {
+                static propTypes = {
+                  user: React.PropTypes.string
+                }
+                render() {
+                  return &lt;div>{this.props.user}&lt;/div>
+                }
+              }
+
+              const FriendUser = makeFriend(User)
+
+              renderToString(&lt;User user="Ivan" />) // "Ivan"
+              renderToString(&lt;FriendUser user="Ivan" />) // "Ivan, hello friend"
+            </code>
+          </pre>
+        </section>
+        <section data-background-color='#315efb'>
+          <h2>Резюмe</h2>
+          <ul>
+            <li class="fragment">Используйте композицию (render) вместо наследования (классы)</li>
+            <li class="fragment">Выносите часть логики в HOC, делая компоненты более простыми</li>
+            <li class="fragment">Конвертацию и подготовку данных можно уносить в HOC</li>
+            <li class="fragment">Утилиты и оптимизации (i18n/pure/emitter) тоже можно уносить в HOC</li>
+          </ul>
+        </section>
+        <section data-background-image='static/mad-max.jpg'>
+          <section data-background-color='rgba(0,0,0,.4)'>
+            <h2>свой велосипед</h2>
+            <p class="fragment">
+              Сделаем HOC, который будет хранить глобальные данные для всех наших компонент.
+            </p>
+          </section>
+        </section>
+        <section>
+          <h2>TODO</h2>
+          <ol>
+            <li class="fragment">Класс Store</li>
+            <li class="fragment">HOC <b>provideGlobalStore</b></li>
+            <li class="fragment">HOC <b>connectGlobalStore</b></li>
+            <li class="fragment">Компонент Root</li>
+            <li class="fragment">Компоненты Foo и Bar</li>
+          </ol>
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" >
+            <code class="hljs js" data-trim>
+            class Store {
+              state = {}
+              emitter = new EventsEmitter
+              setState = (newState) => {
+                this.state = Object.assign({}, this.state, newState)
+                this.emitter.emit('change')
+              };
+              getState() { return this.state }
+            }
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" >
+            <code class="hljs js" data-trim>
+            provideGlobalStore = (OriginalComponent) => {
+              return class WrappedComponent extends React.Component {
+                store = new Store()
+                static childContextTypes = {
+                  store: React.PropTypes.instanceOf(Store)
+                }
+                getChildContext() {
+                  return {store: this.store}
+                }
+                render() {
+                  return &lt;OriginalComponent {...this.props} />
+                }
+              }
+            }
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+            connectGlobalStore = (mapStateToProps) => (OriginalComponent) => {
+              return class WrappedComponent extends React.Component {
+                state = {}
+                static contextTypes = {
+                  store: React.PropTypes.instanceOf(Store)
+                }
+
+                get store() { return this.context.store }
+
+                checkStore = () => {
+                  this.setState(mapStateToProps(this.store.getState()))
+                };
+                componentWillMount() {
+                  this.checkStore()
+                  this.store.emitter.on('change', this.checkStore)
+                }
+                componentWillUnmount() {
+                  this.store.emitter.removeListener('change', this.checkStore)
+                }
+                render() {
+                  return &lt;PureOriginalComponent
+                    setGlobalState={this.store.setState}
+                    {...this.props}
+                    {...this.state} />
+                }
+              }
+            }
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+            @provideGlobalStore(Root)
+            class Root extends React.Component {
+              render() {
+                &lt;div>
+                  &lt;Foo />
+                  &lt;Bar />
+                &lt;/div>
+              }
+            }
+
+            DOM.render(&lt;Root />)
+            </code>
+          </pre>
+        </section>
+        <section style="padding: 0;">
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+            @connectGlobalStore((globalState) => {
+              foo: globalState.foo
+            })
+            class Foo extend React.Component {
+              static propTypes = {
+                foo: React.PropTypes.string
+              }
+              render() {
+                // this.props.foo === 'hello' after Bar onClick
+                return &lt;div>{this.props.foo}&lt;/div>
+              }
+            }
+
+            @connectGlobalStore((globalState) => {})
+            class Bar extend React.Component {
+              onClick() {
+                this.props.setGlobalState({foo: 'hello'})
+              }
+              render() {
+                return &lt;button onClick={this.onClick.bind(this)}>
+                  button
+                &lt;/button>
+              }
+            }
+            </code>
+          </pre>
+        </section>
+        <section data-background-color='#315efb'>
+          <h2>Резюме</h2>
+          <ul>
+            <li class="fragment">Молодцы, написали свой state-manager</li>
+            <li class="fragment">Писать свои state-manager не сложно</li>
+            <li class="fragment">Кажется это на что-то похоже. Flux?</li>
+          </ul>
+        </section>
+        <section data-background-image='static/sky.jpg'>
+          <section data-background-color='rgba(0,0,0,.4)'>
+            <h2>Flux</h2>
+            <p class="fragment">
+              Концепция однонаправленного потока данных в вашем приложении.
+            </p>
+            <ul>
+              <li class="fragment">Component</li>
+              <li class="fragment">Action</li>
+              <li class="fragment">Dispatch</li>
+              <li class="fragment">Reduce state</li>
+              <li class="fragment">Component</li>
+            </ul>
+          </section>
+        </section>
+        <section data-background-color="white">
+          <img data-src="static/redux.svg" style="box-shadow: none; border: none; background: none;">
+        </section>
+        <section data-background-image='static/sky.jpg'>
+          <section data-background-color='rgba(0,0,0,.4)'>
+            <h2>Redux</h2>
+            <p class="fragment">
+              Реализует концепции Flux
+            </p>
+            <p class="fragment">
+              Контейнер глобального состояния вашего приложения
+            </p>
+          </section>
+        </section>
+        <section>
+          <h2>Сторы</h2>
+          <pre>
+            <code class="hljs js" data-trim>
+              const store = redux.createStore(function reducer(state, action) {
+                // react to action
+                switch (action.type) {
+                  ...
+                  return someNewState
+                }
+                return state
+              })
+              ...
+              store.getState() // получить текущее состояние
+              store.dispatch({type: 'FOO', ...}) // кинуть событие
+              store.subscribe() // подписаться на изменение стора
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Actions</h2>
+          <p>Action - это простой JS объект, который обязательно должен содержать свойство <b>type</b></p>
+          <pre>
+            <code class="hljs js" data-trim>
+              const store = createStore(...)
+              store.dispatch({
+                type: 'FOO',
+                bar: 1
+              })
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Action-creators</h2>
+          <pre>
+            <code class="hljs js" data-trim>
+            import {UPDATE_FOO} from '../constants'
+            export const updateFoo = (newValue) => {
+              return {
+                type: UPDATE_FOO,
+                payload: {
+                  newValue: newValue
+                }
+              })
+            }
+            ...
+            store.dispatch(updateFoo(1))
+            store.dispatch(updateFoo(2))
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Редьюсеры</h2>
+          <p>Функции изменения которые отвечают на вопрос, как явно нужно обновить стор</p>
+          <pre>
+            <code class="hljs" data-trim>
+              function reducer (state, action) {
+                switch (action.type) {
+                  case UPDATE_FOO:
+                    return {...state, foo: action.payload.newValue}
+                  ...
+                  default:
+                    return state
+                }
+              }
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Организация кода</h2>
+          <ul>
+            <li>Отдельный файл для constants</li>
+            <li>Отдельная папка для constants на больших проектах</li>
+            <li>Отдельная папка для actions</li>
+            <li>Отдельная папка для reducers</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Сторы</h2>
+          <pre>
+            <code class="hljs" data-trim>
+            /actions/
+              /users.js
+              /comments.js
+              /articles.js
+            /reducers/
+              /users.js
+              /comments.js
+              /articles.js
+            /constants
+              /users.js
+              /comments.js
+              /articles.js
+            </code>
+          </pre>
+        </section>
+        <section data-background-color="#d35400">
+          <h2>Проблема</h2>
+          <p>Неудобный доступ к файлам на проекте. Часть логики лежит в экшенах, часть в редьюсерах, константы лежат в третьем месте.</p>
+        </section>
+        <section>
+          <h2>Методология ducks</h2>
+          <p>В одном файле содержаться экшены, редьюсеры и константы</p>
+          <ul>
+            <li><b>export default</b> должен возвращать reducer</li>
+            <li>остальные <b>export</b> должны возвращать action </li>
+            <li>названия констант в виде <b>prefix/ACTION_TYPE</b></li>
+            <li><b>action-types</b> могут экспортироваться</li>
+          </ul>
+        </section>
+        <section>
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+              // Actions
+              export const LOAD   = 'my-app/users/LOAD';
+              const CREATE = 'my-app/users/CREATE';
+              const UPDATE = 'my-app/users/UPDATE';
+
+              // Reducer
+              export default function reducer(state = {}, action = {}) {
+                switch (action.type) {
+                  // do reducer stuff
+                  default: return state;
+                }
+              }
+
+              // Action Creators
+              export function loadUsers() {
+                return { type: LOAD };
+              }
+              export function createUser(user) {
+                return { type: CREATE, user };
+              }
+              export function updateUser(user) {
+                return { type: UPDATE, user };
+              }
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>action-types</h2>
+          <pre>
+            <code class="hljs" data-trim>
+              ...
+
+              export const FETCH_FOO = 'FETCH_FOO'
+              export const FETCH_FOO_ERROR = 'FETCH_FOO_ERROR'
+              export const FETCH_FOO_SUCCESS = 'FETCH_FOO_SUCCESS'
+
+              export const FETCH_BAR = 'FETCH_BAR'
+              export const FETCH_BAR_ERROR = 'FETCH_BAR_ERROR'
+              export const FETCH_BAR_SUCCESS = 'FETCH_BAR_SUCCESS'
+
+              export const FETCH_THIS = 'FETCH_THIS'
+              export const FETCH_THIS_ERROR = 'FETCH_THIS_ERROR'
+              export const FETCH_THIS_SUCCESS = 'FETCH_THIS_SUCCESS'
+
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>action-types</h2>
+          <img src="static/lis.jpg">
+        </section>
+        <section>
+          <h2>redux-actions</h2>
+          <pre class="stretch">
+            <code class="hljs" data-trim>
+            import {createAction} from 'redux-actions'
+
+            export const increment = createAction('INCREMENT');
+
+            ---
+            import {increment as INCREMENT} from '../action-creators'
+
+            export const reducer = handlerActions({
+              [increment](state, action) {
+                return {
+                  ...state,
+                  counter: state.counter + action.payload
+                }
+              }
+            }, {
+              counter: 0
+            })
+
+            increment(1)
+
+            </code>
+          </pre>
+        </section>
+        <section data-background-color="#d35400">
+          <h2>Проблема</h2>
+          <p>Оказывается, что в редьюсерах никакой бизнес-логики особо и нет, а маппинг данных идет напрямую в <b>store.state</b> через <b>extend</b>.</p>
+        </section>
+        <section>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+              // action
+              const getProfile = createAction('GET_PROFILE',
+                () => rpc(GET_PROFILE, { getAccounts: 1, getChampionat: 1 }),
+              );
+
+              // reducer
+              export default handleActions({
+                [getProfile](state, { error, payload }) {
+                  if (error) {
+                    return {
+                      ...initialState,
+                      isLoaded: true,
+                    };
+                  }
+                  return {
+                    ...state,
+                    ...payload.profile,
+                    isLoaded: true,
+                  };
+                }
+              })
+
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>redux-state</h2>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+              // action
+              const getProfile = createAction('GET_PROFILE', function () {
+                rpc(GET_PROFILE, { getAccounts: 1, getChampionat: 1 })
+                .then(
+                  (data) => {
+                    this.extend({
+                      ...data.profile,
+                      isLoaded: true
+                    })
+                  }
+                )
+                .catch(() => {
+                  this.extend({
+                    ...initialState,
+                    isLoaded: true,
+                  })
+                })
+              });
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>redux-state</h2>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+            import {factory as stateFactory} from 'lib/redux-state'
+
+            const initialState = {foo: 'bar'}
+            const {reducer, createAction} = stateFactory({initialState}, (root) => {
+              return root.foo
+            })
+
+            export default reducer
+            export const updateFoo = createAction('UPDATE', async (params) => {
+              this.extend({loading: true})
+              // this.state и this.rootState доступны
+              const newFoo = await request('update_foo', {
+                token: this.rootState.session.token,
+                ...params
+              })
+              this.extend({
+                loading: false,
+                foo: newFoo
+              })
+            })
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>redux-state</h2>
+          <pre>
+            <code class="hljs js" data-trim>
+              // store.js
+              import {middleware} from 'lib/redux-state'
+              import reducer from 'actions/foo'
+
+              export default createStore(
+                combineReducers({
+                  foo: reducer
+                }),
+                {}, // initial state
+                middleware
+              )
+            </code>
+          </pre>
+        </section>
+        <section data-background-color='#315efb'>
+          <h2>Profit</h2>
+          <ul>
+            <li>Кода стало в полтора-два раза меньше</li>
+            <li>Бизнес-логика стала более понятной</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Структура store</h2>
+          <p><b>Всегда,</b> прежде чем начать программировать компоненты, нужно <b>продумать архитектуру</b> вашего стора.</p>
+        </section>
+        <section>
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+              mainStore = {
+                session: {
+                  isLoading: false,
+                  serverTimeOffset: 0,
+                  user: {}
+                },
+                entities: {
+                  comments: {
+                    '1_123456': {
+                      app: 1,
+                      user: '1_456789',
+                      text: 'Hello'
+                    }
+                  },
+                  users: {
+                    '1_456789': {
+                      name: 'John'
+                    }
+                  },
+                  apps: {
+                    name: 'App 1',
+                    settings: {}
+                  }
+                }
+              }
+            </code>
+          </pre>
+        </section>
+        <section>
+          <pre style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+              commentsStore = {
+                comments: ['1_123', '1_234', ...],
+                nextCommentsPool: ['2_123', '2_234', ...],
+                hasNextComments: true,
+                hasNextNoPoolComments: true
+              }
+            </code>
+          </pre>
+        </section>
+        <section data-background-color='#315efb'>
+          <h2>Советы</h2>
+          <ol>
+            <li class="fragment">Храните в сторе минимальный набор данных</li>
+            <li class="fragment">Не храните вычисляемые (computed) данные в сторе</li>
+            <li class="fragment">Не храните в сторе внутреннее состояние компонента</li>
+            <li class="fragment">Храните данные нормализованными, чтобы обеспечить связь между ними</li>
+          </ol>
+        </section>
+        <section>
+          <h2>Code reuse</h2>
+          <p>Как переиспользовать <b>actions/reducers</b> в большом приложении?</p>
+        </section>
+        <section>
+          <p>Представим, что у нас тяжелый компонент <b>HeavyWidget</b> с бизнес-логикой в Redux</p>
+          <pre >
+            <code class="hljs" data-trim>
+              containers/
+                /HeavyWidget.js
+                /HeavyWidget
+                  /Header.js
+                  /Footer.js
+                  /Charts.js
+                  /TextEditor.js
+              actions
+                /heavy-widget.js
+              reducers
+                /heavy-widget.js
+            </code>
+          </pre>
+        </section>
+        <section>
+          <p>А если таких виджетов два на странице. Что делать?</p>
+          <pre class="stretch">
+            <code class="hljs" data-trim>
+              containers/
+                /HeavyWidget1.js
+                /HeavyWidget2.js
+                /HeavyWidget1
+                  /HeavyWidget.js
+                  /Header.js
+                  /Footer.js
+                  /Charts.js
+                  /TextEditor.js
+                /HeavyWidget2...
+                ...
+              actions
+                /heavy-widget1.js
+                /heavy-widget2.js
+              reducers
+                /heavy-widget1.js
+                /heavy-widget2.js
+            </code>
+          </pre>
+        </section>
+        <section data-background-color='#315efb'>
+          <h2>Решения</h2>
+          <ul>
+            <li class="fragment">Копируем каждый раз actions и reducers для каждого нового контейнера</li>
+            <li class="fragment">Создаем фабрики для генерация actions и reducers (не избавляет от появления новый actions и reducers)</li>
+            <li class="fragment">Под каждый компонент создаем свой стор</li>
+          </ul>
+        </section>
+        <section>
+          <h2>multistore</h2>
+          <p>HOC для <b>динамического</b> создания сторов.</p>
+          <ul>
+            <li>Store создается через фабрику</li>
+            <li>Создание стора происходит в момент создания компонента</li>
+          </ul>
+          <pre>
+            <code class="hljs" data-trim>
+              /store/
+                /factory/
+                  /heavy-widget/
+                    /ducks-actions.js
+                    /index.js
+              /containers
+                /HeavyWidget.js
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>multistore</h2>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+              // store/factory/heavy-widget/index.js
+
+              import reducer from './ducks-actions'
+              import {createStoreFactory} from 'lib/multistore'
+              import baseFactory from 'store/create-store'
+
+              export default createStoreFactory(
+                'HEAVY_WIDGET',
+                baseFactory,
+                {reducer}
+              )
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>multistore</h2>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+              // containers/HeavyWidget.js
+              import {provideStore, connectToStore} from 'lib/multistore'
+              import widgetStore from 'store/factory/heavy-widget/index.js'
+
+              @connectToStore(
+                widgetStore,
+                mapStateToProps,
+                mapActionsToProps
+              )
+              @connectToStore(someAnotherStore, ...)
+              @connect(...) // redux connect
+              class HeavyWidgetInner extends Component {}
+
+              @provideStore(widgetStore)
+              class HeavyWidget extends Component {
+                render() {
+                  return &lt;HeavyWidgetFooter />
+                }
+              }
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>multistore</h2>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+              // App.js
+              class App extends Component {
+                render() {
+                  return &lt;div>
+                    &lt;HeavyWidget params={...}/>
+                    &lt;HeavyWidget params={...}/>
+                    &lt;HeavyWidget params={...}/>
+                  &lt;/div>
+                }
+              }
+            </code>
+          </pre>
+        </section>
+        <section data-background-color='#315efb'>
+          <h2>Достоинства</h2>
+          <ul>
+            <li>Переиспользование бизнес-логики без изменения структуры стора</li>
+            <li><b>mapStateToProps</b> пересчитывается только на тех виджетах, которые подключены к стору</li>
+            <li>Возможно присоединить компонент сразу к нескольким сторам</li>
+            <li>API такое же как у Redux (внутри работает через Redux) </li>
+          </ul>
+        </section>
+        <section data-background-image='static/sky.jpg'>
+          <section data-background-color='rgba(0,0,0,.4)'>
+            <h2>Redux</h2>
+            <p>
+              Подведем итоги
+            </p>
+          </section>
+        </section>
+        <section data-background-color='#27ae60'>
+          <h2>Плюсы</h2>
+          <ul>
+            <li class="fragment">Низкий порог входа</li>
+            <li class="fragment">Очень простой data-flow</li>
+            <li class="fragment">Единый state как Plain Object</li>
+            <li class="fragment">Простой SSR и timetravel</li>
+            <li class="fragment">Полный контроль над состоянием приложения</li>
+            <li class="fragment">Можно использовать как фундамент для своих велосипедов</li>
+            <li class="fragment">Immutable подход</li>
+          </ul>
+        </section>
+        <section data-background-color='#c0392b'>
+          <h2>Минусы</h2>
+          <ul>
+            <li class="fragment">Очень много рутинного кода</li>
+            <li class="fragment">Все приходится делать руками (MT)</li>
+            <li class="fragment">Долгий research для поиска комфортного решения</li>
+            <li class="fragment">Каждый проект - свои велосипеды</li>
+            <li class="fragment">Для любой хотелки нужно ставить зависимости (redux-thunk т.п.)</li>
+            <li class="fragment">Навязывается функциональный подход</li>
+            <li class="fragment">Невозможно использовать ООП для моделирования данных и связей между ними</li>
+          </ul>
+        </section>
+        <section data-background-image='static/space.jpg'>
+          <section data-background-color='rgba(0,0,0,.2)'>
+            <h2>Mobx</h2>
+            <ul>
+              <li class="fragment">
+                Библиотека для простого и масштабируемого управления данными.
+              </li>
+              <li class="fragment">
+                Абсолютно ничего общего не имеет с подходами Redux
+              </li>
+              <li class="fragment">
+                Может использоваться и без React, с любым другим framework
+              </li>
+            </ul>
+          </section>
+        </section>
+        <section>
+          <pre>
+            <code class="hljs js" data-trim>
+              import {observable, computed, autorun} from 'mobx'
+
+              const numbers = observable([1,2,3])
+              const sum = computed(() => numbers.reduce((a, b) => a + b, 0))
+
+              const disposer = autorun(() => console.log(sum.get()))
+              // выводит '6'
+              numbers.push(4)
+              // выводит '10'
+
+              disposer()
+              numbers.push(5)
+              // ничего больше не выводит
+            </code>
+          </pre>
+        </section>
+        <!--         <section data-background-image="static/mobx-dataflow.png" data-background-size="contain">
+        </section> -->
+        <section>
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+              import {observable, computed, action}
+
+              class Programmer {
+                @obserbable skills = []
+                @observable experience = 0
+                @computed get info() {
+                  return `Exp: ${this.experience}; Skills: ${this.skills}`
+                }
+
+                constructor(skills = []) {
+                  this.skills = skills
+                }
+
+                @action
+                learn(skill) {
+                  this.skills.push(skill)
+                  this.experience += 10
+                }
+              }
+
+              const me = new Programmer(['react'])
+              autorun(() => { console.log(me.info) }) // Exp: 0, Skills: react
+              me.learn('mobx') // Exp: 10, Skills: react,mobx
+              me.skills[0] = 'react.js' // Exp: 10, Skills: react.js,mobx
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Концепции</h2>
+          <ul>
+            <li><b>observable</b> - следит за изменением структуры данных</li>
+            <li><b>computed</b> - вычисляемые значения (getters)</li>
+            <li><b>autorun</b> - функции, которые исполняются при изменении observable/computed</li>
+            <li><b>observer</b> - декоратор для React</li>
+            <li><b>action</b> - функции для изменения значений</li>
+          </ul>
+        </section>
+        <section>
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+              const user = mobx.observable({
+                name: 'John',
+                age: 27,
+                isActive: true
+              })
+              const info = mobx.computed(() => user.name + ' ' + user.age)
+
+              mobx.autorun(() => {
+                console.log('autorun')
+                if (user.isActive) console.log(info.get())
+                else console.log('no active')
+              })
+
+              // autorun
+              // John 27
+              user.isActive = false
+              // autorun
+              // no active
+              user.name = 'Bill'
+              user.age = 30
+              user.isActive = true
+              // autorun
+              // Bill 30
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>mobx-react</h2>
+          <pre class="stretch" >
+            <code class="hljs js" data-trim>
+              import {observer} from "mobx-react"
+              import {observable} from "mobx"
+
+              @observer
+              class Timer extends React.Component {
+                @observable secondsPassed = 0
+
+                componentWillMount() {
+                  setInterval(() => {
+                      this.secondsPassed++
+                  }, 1000)
+                }
+
+                render() {
+                  return (&lt;span>Seconds passed: { this.secondsPassed } </span> )
+                }
+              })
+
+              React.render(&lt;Timer />, document.body)
+            </code>
+          </pre>
+        </section>
+        <section>
+          <pre class="stretch" style="margin: -35px 0 0;">
+            <code class="hljs js" data-trim>
+              import {observer} from "mobx-react"
+              import {extendObservable} from "mobx"
+
+              @observer
+              class DataBinding extends React.Component {
+                constructor() {
+                  extendObservable(this, {value: this.props.value})
+                  this.onChange = this.onChange.bind(this)
+                }
+
+                @action
+                onChange(e) {
+                  this.value = e.target.value
+                }
+
+                render() {
+                  return &lt;div>
+                    &lt;input type="text" onChange={this.onChange} value={this.value} />
+                    &lt;span>{this.value}&lt;/span>
+                  &lt;/div>
+                }
+              })
+
+              React.render(&lt;DataBinding value="hello" />, document.body)
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Store Provider</h2>
+          <pre class="stretch">
+            <code class="hljs js" data-trim>
+              import {inject, observer, Provider} from 'mobx-react'
+
+              const AbstractName = observer(({ user }) => &lt;h1>{user.name}&lt;/h1>)
+
+              const UserName = inject('user')(AbstractName)
+
+              const user = mobx.observable({
+                  name: "John"
+              })
+
+              const App = () => (
+                  &lt;Provider user={user}>
+                      &lt;UserName />
+                  &lt;/Provider>
+              )
+
+              ReactDOM.render(&lt;App />, document.body)
+
+              user.name = 'Bill'
+            </code>
+          </pre>
+        </section>
+        <section>
+          <h2>Mobx vs Redux</h2>
+          <p>
+            <a href="http://bit.do/mobx_vs_redux" target="_blank">bit.do/mobx_vs_redux</a>
+          </p>
+        </section>
+        <section data-background-color='#315efb'>
+          <h2>Резюме по mobx</h2>
+          <ul>
+            <li class="fragment">Удобно писать бизнес-логику</li>
+            <li class="fragment">Отсутствие руттинного кода</li>
+            <li class="fragment">Много закулисной магии</li>
+            <li class="fragment">Отсутствие dirty-checking в магии</li>
+            <li class="fragment">Старается делать обновления по минимуму</li>
+            <li class="fragment">Можно использовать ООП подход при работе с данными</li>
+            <li class="fragment">Отличный инструмент из коробки</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Спасибо!</h2>
+          <p>
+            Frontend в Рамблер/Платформа
+            <br/>
+            <b>Сергей Перескоков</b>
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+      // More info https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        history: true,
+        slideNumber: true,
+
+        // More info https://github.com/hakimel/reveal.js#dependencies
+        dependencies: [
+          { src: 'plugin/markdown/marked.js' },
+          { src: 'plugin/markdown/markdown.js' },
+          { src: 'plugin/notes/notes.js', async: true },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+        ]
+      });
+    </script>
+  </body>
+</html>
