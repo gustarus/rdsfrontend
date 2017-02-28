@@ -33,5 +33,10 @@
     "webpack": "1.12.2",
     "webpack-dev-server": "1.12.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "rupture": "^0.6.2",
+    "stylus-mixins": "^0.4.0",
+    "webpack-svgstore-plugin": "^3.0.6"
+  }
 }
